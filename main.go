@@ -25,6 +25,7 @@ import (
 	_ "github.com/FloatTech/NanoBot-Plugin/plugin/hyaku"
 	_ "github.com/FloatTech/NanoBot-Plugin/plugin/manager"
 	_ "github.com/FloatTech/NanoBot-Plugin/plugin/qqwife"
+	_ "github.com/FloatTech/NanoBot-Plugin/plugin/qunyou"
 	_ "github.com/FloatTech/NanoBot-Plugin/plugin/runcode"
 	_ "github.com/FloatTech/NanoBot-Plugin/plugin/score"
 	_ "github.com/FloatTech/NanoBot-Plugin/plugin/status"
@@ -57,9 +58,11 @@ func main() {
 	loadconfig := flag.String("c", "", "load from config")
 	sandbox := flag.Bool("sandbox", false, "run in sandbox api")
 	onlypublic := flag.Bool("public", false, "only listen to public intent")
+	addqqintent := flag.Bool("qq", false, "also listen QQ intent")
 	shardindex := flag.Uint("shardindex", 0, "shard index")
 	shardcount := flag.Uint("shardcount", 0, "shard count")
 	savecfg := flag.String("save", "", "save bot config to filename (eg. config.yaml)")
+	superallqqusers := flag.Bool("superallqq", false, "make all QQ users to be SuperUser")
 	flag.Parse()
 	if *help {
 		fmt.Println("Usage:")
@@ -70,12 +73,18 @@ func main() {
 	if *debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
-	intent := uint32(nano.IntentPrivate)
+	intent := uint32(nano.IntentGuildPrivate)
 	if *onlypublic {
-		intent = nano.IntentPublic
+		intent = nano.IntentGuildPublic
+	}
+	if *addqqintent {
+		intent |= nano.IntentQQ
 	}
 
 	sus := make([]string, 0, 16)
+	if *superallqqusers {
+		sus = append(sus, nano.SuperUserAllQQUsers)
+	}
 	for _, s := range flag.Args() {
 		_, err := strconv.ParseInt(s, 10, 64)
 		if err != nil {

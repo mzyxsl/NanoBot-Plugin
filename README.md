@@ -14,8 +14,8 @@
 ## 命令行参数
 > `[]`代表是可选参数
 ```bash
-nanobot [-Tadhst] ID1 ID2 ...
-
+nanobot [参数] ID1 ID2 ...
+参数:
   -D    enable debug-level log output
   -T int
         api timeout (s) (default 60)
@@ -26,6 +26,8 @@ nanobot [-Tadhst] ID1 ID2 ...
   -h    print this help
   -public
         only listen to public intent
+  -qq
+        also listen QQ intent
   -s string
         qq secret
   -sandbox
@@ -36,6 +38,8 @@ nanobot [-Tadhst] ID1 ID2 ...
         shard count
   -shardindex uint
         shard index
+  -superallqq
+        make all QQ users to be SuperUser
   -t string
         qq api token
 ```

@@ -5,11 +5,10 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/FloatTech/AnimeAPI/bilibili"
+	"github.com/FloatTech/AnimeAPI/setu"
 	"github.com/FloatTech/AnimeAPI/wallet"
 	"github.com/FloatTech/NanoBot-Plugin/utils/ctxext"
 	"github.com/FloatTech/floatbox/file"
@@ -24,11 +23,9 @@ import (
 )
 
 const (
-	backgroundURL = "https://iw233.cn/api.php?sort=pc"
-	referer       = "https://weibo.com/"
-	signinMax     = 1
-	// SCOREMAX 分数上限定为1200
-	SCOREMAX = 1200
+	signinMax = 1
+	// scoreMax 分数上限定为1200
+	scoreMax = 1200
 )
 
 var (
@@ -68,11 +65,10 @@ func init() {
 			_, _ = ctx.SendPlainMessage(false, "ERROR: 未获取到用户uid")
 			return
 		}
-		uidint, _ := strconv.ParseUint(uid, 10, 64)
+		uidint := ctx.UserID()
 		today := time.Now().Format("20060102")
 		// 签到图片
 		drawedFile := cachePath + uid + today + "signin.png"
-		picFile := cachePath + uid + today + ".png"
 		// 获取签到时间
 		si := sdb.GetSignInByUID(int64(uidint))
 		siUpdateTimeStr := si.UpdatedAt.Format("20060102")
@@ -106,8 +102,8 @@ func init() {
 		}
 		// 更新经验
 		level := sdb.GetScoreByUID(int64(uidint)).Score + 1
-		if level > SCOREMAX {
-			level = SCOREMAX
+		if level > scoreMax {
+			level = scoreMax
 			_, err := ctx.SendPlainMessage(true, "你的等级已经达到上限")
 			if err != nil {
 				_, _ = ctx.SendPlainMessage(false, "ERROR: ", err)
@@ -131,13 +127,16 @@ func init() {
 		}()
 		alldata := &scoredata{
 			drawedfile: drawedFile,
-			picfile:    picFile,
 			avatarurl:  ctx.Message.Author.Avatar,
-			nickname:   ctx.Message.Author.Username,
 			inc:        add,
 			score:      wallet.GetWalletOf(int64(uidint)),
 			level:      level,
 			rank:       rank,
+		}
+		if ctx.Message.Author.Username != "" {
+			alldata.nickname = ctx.Message.Author.Username
+		} else {
+			alldata.nickname = "您好"
 		}
 		drawimage, err := floatstyle(alldata)
 		if err != nil {
@@ -294,22 +293,14 @@ func getrank(count int) int {
 	return -1
 }
 
-func initPic(picFile string, avatarurl string) (avatar []byte, err error) {
+func initPic(avatarurl string) (pic string, avatar []byte, err error) {
+	if avatarurl != "" {
+		avatar, err = web.GetData(avatarurl)
+		if err != nil {
+			return
+		}
+	}
 	defer process.SleepAbout1sTo2s()
-	avatar, err = web.GetData(avatarurl)
-	if err != nil {
-		return
-	}
-	if file.IsExist(picFile) {
-		return
-	}
-	url, err := bilibili.GetRealURL(backgroundURL)
-	if err != nil {
-		return
-	}
-	data, err := web.RequestDataWith(web.NewDefaultClient(), url, "", referer, "", nil)
-	if err != nil {
-		return
-	}
-	return avatar, os.WriteFile(picFile, data, 0644)
+	pic, err = setu.DefaultPool.Roll("")
+	return
 }

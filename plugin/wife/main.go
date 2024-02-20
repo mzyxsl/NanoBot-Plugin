@@ -4,7 +4,6 @@ package wife
 import (
 	"encoding/json"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/FloatTech/NanoBot-Plugin/utils/ctxext"
@@ -45,18 +44,26 @@ func init() {
 				_, _ = ctx.SendPlainMessage(false, "ERROR: 未获取到用户")
 				return
 			}
-			uidint, _ := strconv.ParseInt(uid, 10, 64)
+			uidint := int64(ctx.UserID())
 			card := cards[fcext.RandSenderPerDayN(uidint, len(cards))]
 			data, err := engine.GetLazyData("wives/"+card, true)
 			card, _, _ = strings.Cut(card, ".")
 			if err != nil {
-				_, err = ctx.SendChain(nano.At(uid), nano.Text("今天的二次元老婆是~【", card, "】哒\n【图片下载失败: ", err, "】"))
+				if nano.OnlyQQ(ctx) {
+					_, err = ctx.SendChain(nano.Text("今天的二次元老婆是~【", card, "】哒\n【图片下载失败: ", err, "】"))
+				} else {
+					_, err = ctx.SendChain(nano.At(uid), nano.Text("今天的二次元老婆是~【", card, "】哒\n【图片下载失败: ", err, "】"))
+				}
 				if err != nil {
 					_, _ = ctx.SendPlainMessage(false, "ERROR: ", err)
 				}
 				return
 			}
-			_, err = ctx.SendChain(nano.At(uid), nano.Text("今天的二次元老婆是~【", card, "】哒"), nano.ImageBytes(data))
+			if nano.OnlyQQ(ctx) {
+				_, err = ctx.SendChain(nano.Text("今天的二次元老婆是~【", card, "】哒"), nano.ImageBytes(data))
+			} else {
+				_, err = ctx.SendChain(nano.At(uid), nano.Text("今天的二次元老婆是~【", card, "】哒"), nano.ImageBytes(data))
+			}
 			if err != nil {
 				_, _ = ctx.SendPlainMessage(false, "ERROR: ", err)
 			}
